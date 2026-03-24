@@ -7,6 +7,7 @@ import ImageDropzone from "@/components/ImageDropzone";
 import ColorSwatch from "@/components/ColorSwatch";
 import ExportPanel from "@/components/ExportPanel";
 import SavePalette from "@/components/SavePalette";
+import SharePalette from "@/components/SharePalette";
 import PaletteHistory from "@/components/PaletteHistory";
 import DarkModeToggle from "@/components/DarkModeToggle";
 import ToastContainer from "@/components/Toast";
@@ -28,7 +29,44 @@ export default function Home() {
   const [numColors, setNumColors] = useState(6);
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+
+    // Check for shared palette in URL params
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const paletteParam = params.get("palette");
+      if (paletteParam) {
+        const hexColors = paletteParam.split("-").filter(Boolean);
+        if (hexColors.length > 0) {
+          const parsedColors = hexColors.map((hex) => {
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            const rr = r / 255, gg = g / 255, bb = b / 255;
+            const max = Math.max(rr, gg, bb), min = Math.min(rr, gg, bb);
+            let h = 0, s = 0;
+            const l = (max + min) / 2;
+            if (max !== min) {
+              const d = max - min;
+              s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+              switch (max) {
+                case rr: h = ((gg - bb) / d + (gg < bb ? 6 : 0)) / 6; break;
+                case gg: h = ((bb - rr) / d + 2) / 6; break;
+                case bb: h = ((rr - gg) / d + 4) / 6; break;
+              }
+            }
+            return {
+              hex: `#${hex}`,
+              rgb: { r, g, b },
+              hsl: { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) },
+            };
+          });
+          setCurrentColors(parsedColors);
+        }
+      }
+    }
+  }, [setCurrentColors]);
 
   useEffect(() => {
     if (darkMode) {
@@ -167,6 +205,7 @@ export default function Home() {
         {currentColors.length > 0 && !processing && (
           <div className="space-y-4">
             <SavePalette />
+            <SharePalette />
             <ExportPanel colors={currentColors} paletteName="palette" />
           </div>
         )}

@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Copy, Check as CheckIcon, Eye } from "lucide-react";
+import { Copy, Check as CheckIcon, Eye, Pipette } from "lucide-react";
 import type { ExtractedColor } from "@/lib/color-extraction";
 import { checkWCAG, type WCAGResult } from "@/lib/contrast";
+import { usePaletteStore } from "@/store/palette-store";
 import { toast } from "./Toast";
 
 interface Props {
@@ -14,7 +15,40 @@ interface Props {
 
 export default function ColorSwatch({ color, index }: Props) {
   const [showContrast, setShowContrast] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const { currentColors, setCurrentColors } = usePaletteStore();
+
+  const handleColorChange = (newHex: string) => {
+    // Parse hex to RGB and HSL
+    const hex = newHex.replace("#", "");
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+
+    // RGB to HSL
+    const rr = r / 255, gg = g / 255, bb = b / 255;
+    const max = Math.max(rr, gg, bb), min = Math.min(rr, gg, bb);
+    let h = 0, s = 0;
+    const l = (max + min) / 2;
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case rr: h = ((gg - bb) / d + (gg < bb ? 6 : 0)) / 6; break;
+        case gg: h = ((bb - rr) / d + 2) / 6; break;
+        case bb: h = ((rr - gg) / d + 4) / 6; break;
+      }
+    }
+
+    const updated = [...currentColors];
+    updated[index] = {
+      hex: newHex,
+      rgb: { r, g, b },
+      hsl: { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) },
+    };
+    setCurrentColors(updated);
+  };
 
   const whiteContrast: WCAGResult = checkWCAG(
     { r: 255, g: 255, b: 255 },
@@ -51,13 +85,33 @@ export default function ColorSwatch({ color, index }: Props) {
         className="aspect-square w-full relative"
         style={{ backgroundColor: color.hex }}
       >
-        <button
-          onClick={() => setShowContrast(!showContrast)}
-          className={`absolute top-2 right-2 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${textColor} hover:bg-black/10 dark:hover:bg-white/10`}
-          title="Check contrast"
-        >
-          <Eye className="h-4 w-4" />
-        </button>
+        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={() => setShowPicker(!showPicker)}
+            className={`p-1.5 rounded-full ${textColor} hover:bg-black/10 dark:hover:bg-white/10`}
+            title="Adjust color"
+          >
+            <Pipette className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setShowContrast(!showContrast)}
+            className={`p-1.5 rounded-full ${textColor} hover:bg-black/10 dark:hover:bg-white/10`}
+            title="Check contrast"
+          >
+            <Eye className="h-4 w-4" />
+          </button>
+        </div>
+
+        {showPicker && (
+          <div className="absolute bottom-2 left-2 right-2">
+            <input
+              type="color"
+              value={color.hex}
+              onChange={(e) => handleColorChange(e.target.value)}
+              className="w-full h-8 rounded cursor-pointer border-0"
+            />
+          </div>
+        )}
 
         {showContrast && (
           <motion.div
