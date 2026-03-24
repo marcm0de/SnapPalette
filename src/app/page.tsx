@@ -1,65 +1,187 @@
-import Image from "next/image";
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { Palette } from "lucide-react";
+import ImageDropzone from "@/components/ImageDropzone";
+import ColorSwatch from "@/components/ColorSwatch";
+import ExportPanel from "@/components/ExportPanel";
+import SavePalette from "@/components/SavePalette";
+import PaletteHistory from "@/components/PaletteHistory";
+import DarkModeToggle from "@/components/DarkModeToggle";
+import ToastContainer from "@/components/Toast";
+import { usePaletteStore } from "@/store/palette-store";
+import {
+  extractColors,
+  imageFileToImageData,
+} from "@/lib/color-extraction";
 
 export default function Home() {
+  const {
+    currentColors,
+    currentImagePreview,
+    darkMode,
+    setCurrentColors,
+    setCurrentImagePreview,
+  } = usePaletteStore();
+  const [processing, setProcessing] = useState(false);
+  const [numColors, setNumColors] = useState(6);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [darkMode]);
+
+  const handleImageSelected = useCallback(
+    async (file: File) => {
+      setProcessing(true);
+      try {
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result as string;
+          // Create small thumbnail for storage
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = 80;
+            canvas.height = 80;
+            const ctx = canvas.getContext("2d");
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, 80, 80);
+              setCurrentImagePreview(canvas.toDataURL("image/jpeg", 0.5));
+            }
+          };
+          img.src = result;
+          setCurrentImagePreview(result);
+        };
+        reader.readAsDataURL(file);
+
+        const imageData = await imageFileToImageData(file);
+        const colors = extractColors(imageData, numColors);
+        setCurrentColors(colors);
+      } catch (err) {
+        console.error("Error extracting colors:", err);
+      } finally {
+        setProcessing(false);
+      }
+    },
+    [numColors, setCurrentColors, setCurrentImagePreview]
+  );
+
+  if (!mounted) return null;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors">
+      <ToastContainer />
+
+      {/* Header */}
+      <header className="border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-40">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Palette className="h-6 w-6 text-blue-600" />
+            <h1 className="text-xl font-bold">SnapPalette</h1>
+          </div>
+          <DarkModeToggle />
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+        {/* Hero text */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <h2 className="text-3xl font-bold mb-2">
+            Instant Color Palettes from Images
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400">
+            Drop an image to extract its dominant colors. Copy, export, and
+            check accessibility — all in your browser.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        </motion.div>
+
+        {/* Dropzone */}
+        <ImageDropzone
+          onImageSelected={handleImageSelected}
+          preview={currentImagePreview}
+        />
+
+        {/* Color count selector */}
+        {currentColors.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center justify-center gap-3"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <label className="text-sm text-gray-500 dark:text-gray-400">
+              Colors:
+            </label>
+            <div className="flex gap-1">
+              {[4, 5, 6, 7, 8].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setNumColors(n)}
+                  className={`h-8 w-8 rounded-lg text-xs font-medium transition-colors ${
+                    numColors === n
+                      ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Loading */}
+        {processing && (
+          <div className="flex justify-center py-8">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900 dark:border-gray-600 dark:border-t-gray-100" />
+          </div>
+        )}
+
+        {/* Color swatches grid */}
+        {currentColors.length > 0 && !processing && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
           >
-            Documentation
-          </a>
-        </div>
+            {currentColors.map((color, i) => (
+              <ColorSwatch key={`${color.hex}-${i}`} color={color} index={i} />
+            ))}
+          </motion.div>
+        )}
+
+        {/* Save & Export */}
+        {currentColors.length > 0 && !processing && (
+          <div className="space-y-4">
+            <SavePalette />
+            <ExportPanel colors={currentColors} paletteName="palette" />
+          </div>
+        )}
+
+        {/* History */}
+        <PaletteHistory />
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-200 dark:border-gray-800 mt-16">
+        <div className="max-w-5xl mx-auto px-4 py-6 text-center text-sm text-gray-400">
+          SnapPalette — Open source color palette generator. No data leaves your
+          browser.
+        </div>
+      </footer>
     </div>
   );
 }
