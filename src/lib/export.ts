@@ -49,3 +49,19 @@ export function exportJSON(colors: ExtractedColor[]): string {
     2
   );
 }
+
+export function exportSVG(colors: ExtractedColor[]): string {
+  const width = colors.length * 100;
+  const rects = colors
+    .map(
+      (c, i) =>
+        `  <rect x="${i * 100}" y="0" width="100" height="200" fill="${c.hex}" />\n  <text x="${i * 100 + 50}" y="220" text-anchor="middle" font-family="monospace" font-size="11" fill="#666">${c.hex}</text>`
+    )
+    .join("\n");
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} 240" width="${width}" height="240">\n${rects}\n</svg>`;
+}
+
+export function exportGradientCSS(colors: ExtractedColor[]): string {
+  const stops = colors.map((c) => c.hex).join(", ");
+  return `/* Gradient */\nbackground: linear-gradient(90deg, ${stops});\n\n/* Radial */\nbackground: radial-gradient(circle, ${stops});`;
+}

@@ -9,6 +9,7 @@ import ExportPanel from "@/components/ExportPanel";
 import SavePalette from "@/components/SavePalette";
 import SharePalette from "@/components/SharePalette";
 import PaletteHistory from "@/components/PaletteHistory";
+import GradientGenerator from "@/components/GradientGenerator";
 import DarkModeToggle from "@/components/DarkModeToggle";
 import ToastContainer from "@/components/Toast";
 import { usePaletteStore } from "@/store/palette-store";
@@ -209,6 +210,11 @@ export default function Home() {
             <ExportPanel colors={currentColors} paletteName="palette" />
           </div>
         )}
+
+        {/* Gradient Generator */}
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+          <GradientGenerator />
+        </div>
 
         {/* History */}
         <PaletteHistory />

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, ChevronDown, Copy } from "lucide-react";
 import type { ExtractedColor } from "@/lib/color-extraction";
-import { exportCSS, exportTailwind, exportSCSS, exportJSON } from "@/lib/export";
+import { exportCSS, exportTailwind, exportSCSS, exportJSON, exportSVG, exportGradientCSS } from "@/lib/export";
 import { toast } from "./Toast";
 
 interface Props {
@@ -17,6 +17,8 @@ const formats = [
   { id: "tailwind", label: "Tailwind Config", fn: exportTailwind },
   { id: "scss", label: "SCSS Variables", fn: exportSCSS },
   { id: "json", label: "JSON", fn: exportJSON },
+  { id: "svg", label: "SVG Swatch", fn: exportSVG },
+  { id: "gradient", label: "Gradient CSS", fn: exportGradientCSS },
 ] as const;
 
 export default function ExportPanel({ colors, paletteName }: Props) {
