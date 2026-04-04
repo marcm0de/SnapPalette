@@ -46,10 +46,10 @@ export default function ExportPanel({ colors, paletteName }: Props) {
     >
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-5 py-3 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+        className="flex w-full items-center justify-between rounded-xl border-2 border-purple-300 dark:border-purple-600 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/30 dark:to-indigo-900/30 px-5 py-4 text-sm font-semibold hover:from-purple-100 hover:to-indigo-100 dark:hover:from-purple-900/50 dark:hover:to-indigo-900/50 transition-all duration-200 shadow-sm hover:shadow-md"
       >
-        <span className="flex items-center gap-2">
-          <Download className="h-4 w-4" />
+        <span className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
+          <Download className="h-5 w-5" />
           Export Palette
         </span>
         <ChevronDown

@@ -78,14 +78,14 @@ export default function ColorSwatch({ color, index }: Props) {
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3, delay: index * 0.08 }}
-      className="group relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-shadow"
+      className="group relative overflow-hidden rounded-xl shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer ring-2 ring-transparent hover:ring-white/20"
     >
       {/* Main color block */}
       <div
         className="aspect-square w-full relative"
         style={{ backgroundColor: color.hex }}
       >
-        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
           <button
             onClick={() => setShowPicker(!showPicker)}
             className={`p-1.5 rounded-full ${textColor} hover:bg-black/10 dark:hover:bg-white/10`}
@@ -138,7 +138,7 @@ export default function ColorSwatch({ color, index }: Props) {
       </div>
 
       {/* Color info panel */}
-      <div className="bg-white dark:bg-gray-800 p-3 space-y-1.5">
+      <div className="bg-white dark:bg-gray-800 p-3 space-y-1.5 border-t border-gray-100 dark:border-gray-700/50">
         <CopyRow
           label="HEX"
           value={color.hex}
